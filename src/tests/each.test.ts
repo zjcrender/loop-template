@@ -2,10 +2,6 @@ import { describe, expect, test } from "bun:test";
 import Template from '../index'
 
 describe("each tests", () => {
-  function dropWhiteSpace(str: string) {
-    return str.replace(/\s/g, '')
-  }
-
   test("normal", () => {
 
     const template = `
@@ -20,23 +16,19 @@ describe("each tests", () => {
       {{/each}}
     `
     const context = { list: [ { v: 'a', vv: 'aa' }, { v: 'b', vv: 'bb' } ] }
-    const expected = dropWhiteSpace(`
+    const expected = `
       index is: 0
       v is: a
       index is: 1
       v is: b
+      
       index is: 0
       vv is: aa
       index is: 1
       vv is: bb
-    `)
+    `
 
-    expect(
-      dropWhiteSpace(
-        new Template(template).render(context)
-      )
-    ).toBe(expected)
-
+    expect(new Template(template).render(context)).toBe(expected)
   })
 
 
@@ -45,9 +37,9 @@ describe("each tests", () => {
     const template = `
       {{each item in list}}
       group name: {{item.group}}
-      {{each value in item.items}}
+        {{each value in item.items}}
         - {{value}}
-      {{/each}}
+        {{/each}}
       {{/each}}
     `
     const context = {
@@ -56,20 +48,16 @@ describe("each tests", () => {
         { group: 'gb', items: [ 'x', 'y' ] },
       ]
     }
-    const expected = dropWhiteSpace(`
+    const expected = `
       group name: ga
         - a
         - b
       group name: gb
         - x
         - y
-    `)
+    `
 
-    expect(
-      dropWhiteSpace(
-        new Template(template).render(context)
-      )
-    ).toBe(expected)
+    expect(new Template(template).render(context)).toBe(expected)
 
   })
 

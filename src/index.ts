@@ -3,8 +3,8 @@ type ContentBLock = {
   content: string
 }
 
-type LoopBlock = {
-  type: "loop",
+type EachBlock = {
+  type: "each",
   expr: {
     itemName: string,
     dataFrom: string
@@ -12,7 +12,7 @@ type LoopBlock = {
   content: string
 }
 
-type Block = ContentBLock | LoopBlock
+type Block = ContentBLock | EachBlock
 
 type Context = Record<string, any>
 
@@ -23,8 +23,11 @@ export default class Template {
   }
 
   // 将内容分割成：普通内容块 和 each指令块
+  private blockProcessed = false
   private intoBlocks() {
-    const re = /{{\s*each\s+([a-zA-Z0-9_]+)\s+in\s+([a-zA-Z0-9_.$]+)\s*}}\n?|{{\/each}}/g;
+    if (this.blockProcessed) return
+
+    const re = /{{\s*each\s+([a-zA-Z0-9_]+)\s+in\s+([a-zA-Z0-9_.$]+)\s*}}|{{\/each}}/mg;
 
     let match: RegExpMatchArray | null = null
     let starters: any[] = []
@@ -55,7 +58,7 @@ export default class Template {
           contentPos = re.lastIndex;
 
           this.blocks.push({
-            type: 'loop',
+            type: 'each',
             expr: starter.expr,
             content: this.template.slice(starter.contentPos, match.index),
           })
@@ -68,6 +71,8 @@ export default class Template {
       type: 'content',
       content: this.template.slice(contentPos),
     })
+
+    this.blockProcessed = true
   }
 
   private getContextValue(path: string, context: Context): any {
@@ -89,7 +94,7 @@ export default class Template {
     return this.renderInterpolate(block.content, context)
   }
 
-  private renderLoops(block: LoopBlock, context: Context): string {
+  private renderEach(block: EachBlock, context: Context): string {
     const { itemName, dataFrom } = block.expr
     const array = this.getContextValue(dataFrom, context)
     if (!Array.isArray(array)) return ""
@@ -101,7 +106,11 @@ export default class Template {
           $index: index,
           [itemName]: element,
         }
-        return new Template(block.content).render(loopContext)
+
+        return new Template(index === 0
+          ? block.content.trim()
+          : block.content.trimEnd()
+        ).render(loopContext)
       })
       .join('');
   }
@@ -117,8 +126,8 @@ export default class Template {
           case "content":
             return this.renderContents(block, context)
 
-          case "loop":
-            return this.renderLoops(block, context)
+          case "each":
+            return this.renderEach(block, context)
         }
       })
       .join("")
