@@ -61,5 +61,20 @@ describe("each tests", () => {
 
   })
 
+  test("each if", () => {
+    const template = `
+      {{each item in list}}
+      {{if item.v}}
+      v is: {{item.v}}
+      {{/if}}
+      {{/each}}
+    `
+    const context = { list: [ { v: 'a' }, { k: 'b' } ] }
+    const expected = `
+      v is: a
+      
+    `
 
+    expect(new Template(template).render(context)).toBe(expected)
+  })
 })
